@@ -283,7 +283,11 @@ HTML rendered from hand-built payload fixtures before writing any math.
 Each phase lands as one or more PRs with tests; later phases depend on
 earlier ones. Suggested order optimizes for an early end-to-end demo.
 
-**Phase 0 — Infrastructure + rendering spike**
+**Phase 0 — Infrastructure + rendering spike** *(landed: `render/` vendors
+`bipl5_plotly.js` plus plotly.js 2.35.2 — plotly.py 6 ships plotly.js 3.x,
+which breaks the vendored JS, so rendering pins 2.x — and `Bipl5Widget`
+delivers HTML via `plotly.io.to_html` + `post_script`; verified interactive
+in headless Chromium)*
 - Modernize `pyproject.toml` (deps: `numpy`, `scipy`, `pandas`, `plotly`;
   dev: `pytest`, `pytest-cov`, `ruff`; Python ≥3.10), package data for the
   JS, CI workflow, drop cookiecutter placeholders.
@@ -292,6 +296,8 @@ earlier ones. Suggested order optimizes for an early end-to-end demo.
   (generate one JSON fixture from the R package for iris PCA).
 
 **Phase 1 — R-compat utilities + geometry (pure functions, heavily tested)**
+*(landed: `rcompat.py` — pretty/nrd0 density/approx/adjustcolor — and
+`geometry.py` incl. a Khachiyan MVEE replacing `cluster::ellipsoidhull`)*
 - `rcompat.py`: `pretty`, `nrd0`-bandwidth KDE on `[from, to]` grids,
   `approx`, colour helpers. Golden tests against values exported from R.
 - `geometry.py`: `RotationConstructor` (block rotation matrices), `translate`,
@@ -309,14 +315,20 @@ low-dimension strategy still raise `NotImplementedError`)*
   (SVD signs are arbitrary in both LAPACK and R; fix a convention —
   largest-magnitude loading positive — and align fixtures before comparing).
 
-**Phase 3 — Payload layer for PCA**
+**Phase 3 — Payload layer for PCA** *(landed: `display/`, `spec.py`,
+`biplot.py` — the milestone below is met, and the compile paths for
+CVA/PCO(regression axes)/regress landed with it)*
 - `display/` + `hover.py` + `spec.py` (PCA branch only) + minimal `biplot.py`
   (`Biplot`, `MdsDisplay`, `BiplotData`, `FitMeasures`, `plot()`).
 - Structural parity tests: trace counts, `meta` tags, `legendgroup`s,
   annotation counts, slider config, hover-table strings vs R JSON fixtures.
 - **Milestone: `init_biplot(iris).scale_mds("pca").plot()` fully interactive.**
 
-**Phase 4 — API verbs**
+**Phase 4 — API verbs** *(mostly landed: `score_axes`,
+`append/remove_mds_display`, `extract`, `overlay_fit`, `BiplotFit.plot()`,
+`colorpal`, `symbol_list`, plain `__repr__`s. Remaining: `format_samples`
+— the largest single R file, with the dual-stratification state machine —
+and the full tree-style printers)*
 - `format_samples` (single + dual stratification + TDA density rebuild),
   `score_axes`, `append/remove_mds_display`, `extract`, `overlay_fit`,
   `BiplotFit.plot()`, `__repr__` tree printers, `colorpal`, `symbol_list`.

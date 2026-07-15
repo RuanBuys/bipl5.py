@@ -7,5 +7,19 @@ except PackageNotFoundError:  # running from a source checkout
     __version__ = "0.0.0"
 
 from bipl5 import ordination
+from bipl5.biplot import Biplot, BiplotFit
+from bipl5.score_axes import score_axes
+from bipl5.spec import BiplotSpec, init_biplot
+from bipl5.symbols import colorpal, symbol_list
 
-__all__ = ["ordination", "__version__"]
+__all__ = [
+    "init_biplot",
+    "BiplotSpec",
+    "Biplot",
+    "BiplotFit",
+    "score_axes",
+    "colorpal",
+    "symbol_list",
+    "ordination",
+    "__version__",
+]

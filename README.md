@@ -10,32 +10,64 @@ $ pip install bipl5
 
 ## Usage
 
-The interactive `init_biplot()` pipeline is still under construction (see
-`TRANSLATION_PLAN.md`). The internal ordination engine — a Python port of the
-parts of the R package [biplotEZ](https://cran.r-project.org/package=biplotEZ)
-that bipl5 relies on — is available today:
+The interactive pipeline mirrors the R package, with method chaining in
+place of R's pipe:
 
 ```python
 import pandas as pd
-from bipl5.ordination import biplot, axes_coordinates
+import bipl5
 
 data = pd.read_csv("mydata.csv")
 
 bp = (
-    biplot(data, group_aes=data["Species"], scaled=True)
-    .pca(e_vects=(1, 2), show_class_means=True)   # or .cva() / .pco() / .regress()
-    .fit_measures()
+    bipl5.init_biplot(data, center=True, scale=False)
+    .scale_mds("pca", classes=data["Species"])   # or "cva" / "pco" / "regress"
+    .score_axes()                                # optional: Alves reading errors
 )
 
-bp.Z                     # sample coordinates in the biplot plane
-bp.axis_predictivity     # per-variable measures of fit
-axes_coordinates(bp)     # calibrated tick marks for every biplot axis
+widget = bp.plot()      # displays itself in Jupyter/Quarto
+widget.save("biplot.html")   # standalone offline HTML file
+widget.show()                # open in a browser
 ```
 
-Implemented methods: PCA (incl. correlation biplots), CVA (incl. the
-`sample.opt` low-dimension strategy), PCO with regression axes, and
-regression biplots on user-supplied coordinates. Spline axes are not yet
-ported.
+The rendered biplot carries the same reactivity as the R package —
+calibrated axes with click-to-predict, translated density axes, vector
+display, PC-pair switching, and measures-of-fit panels — driven by the same
+JavaScript, vendored unchanged from the R package.
+
+More of the API:
+
+```python
+bp = bp.append_mds_display((1, 3))          # add a PC pair to the dropdown
+bp = bp.remove_mds_display("mdsDisplay_13") # and remove it again
+bp = bp.overlay_fit(True)                   # default fit-measure display mode
+
+coords = bp.extract("mdsDisplay_12.Data.sample_coordinates")
+fit = bp.extract("fit_measures.CumPred")    # plottable fit graph
+fit.plot()
+```
+
+The internal ordination engine — a Python port of the parts of the R
+package [biplotEZ](https://cran.r-project.org/package=biplotEZ) that bipl5
+relies on — is available as `bipl5.ordination`:
+
+```python
+from bipl5.ordination import biplot, axes_coordinates
+
+ez = (
+    biplot(data, group_aes=data["Species"], scaled=True)
+    .pca(e_vects=(1, 2), show_class_means=True)
+    .fit_measures()
+)
+ez.Z                     # sample coordinates in the biplot plane
+ez.axis_predictivity     # per-variable measures of fit
+axes_coordinates(ez)     # calibrated tick marks for every biplot axis
+```
+
+Implemented: PCA (incl. correlation biplots), CVA (incl. the `sample.opt`
+low-dimension strategy), PCO with regression axes, and regression biplots
+on user-supplied coordinates. Not yet ported: spline axes and
+`format_samples()` (see `TRANSLATION_PLAN.md` for the roadmap).
 
 ## Contributing
 

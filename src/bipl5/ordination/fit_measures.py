@@ -175,3 +175,85 @@ def fit_quality_string(
         f"Quality of display = {both}% = {first}% ({dim_prefix}{e_vects[0]}) "
         f"+ {second}% ({dim_prefix}{e_vects[1]})"
     )
+
+
+def regression_fit_components(X, Z) -> dict:
+    """Port of bipl5's ``regression_fit_components()``.
+
+    Orthogonalizes the display coordinates in their given order so the
+    per-dimension sums of squares are additive while preserving the
+    displayed Dim 1 / Dim 2 ordering.
+    """
+    X = np.asarray(X, dtype=float)
+    Z = np.atleast_2d(np.asarray(Z, dtype=float))
+    if X.ndim != 2 or X.shape[0] == 0 or Z.shape[0] != X.shape[0] or Z.shape[1] == 0:
+        return {"total_ss": 0.0, "overall_ss": 0.0, "dim_ss": np.zeros(0)}
+
+    total_ss = float(np.sum(X**2))
+    dim_ss = np.zeros(Z.shape[1])
+    if not np.isfinite(total_ss) or total_ss <= 0:
+        return {"total_ss": total_ss, "overall_ss": 0.0, "dim_ss": dim_ss}
+
+    q_cols = None
+    tol = np.sqrt(np.finfo(float).eps)
+    for j in range(Z.shape[1]):
+        zj = Z[:, j : j + 1]
+        if q_cols is not None:
+            zj = zj - q_cols @ (q_cols.T @ zj)
+        norm_zj = float(np.sqrt(np.sum(zj**2)))
+        if not np.isfinite(norm_zj) or norm_zj <= tol:
+            continue
+        qj = zj / norm_zj
+        dim_ss[j] = float(np.sum((qj @ (qj.T @ X)) ** 2))
+        q_cols = qj if q_cols is None else np.hstack([q_cols, qj])
+
+    return {"total_ss": total_ss, "overall_ss": float(dim_ss.sum()), "dim_ss": dim_ss}
+
+
+def regression_fit_quality(X, Z, dim_prefix: str = "Dim", digits: int = 2) -> str:
+    """Port of bipl5's ``regression_fit_quality()`` display string."""
+    comp = regression_fit_components(X, Z)
+    n_terms = comp["dim_ss"].size
+    if n_terms == 0 or not np.isfinite(comp["total_ss"]) or comp["total_ss"] <= 0:
+        return ""
+
+    dim_pct = 100 * comp["dim_ss"] / comp["total_ss"]
+    overall_pct = 100 * comp["overall_ss"] / comp["total_ss"]
+
+    def fmt(x):
+        return f"{round(float(x), digits):g}"
+
+    pieces = []
+    for i in range(1, n_terms + 1):
+        if i == 1:
+            label = "R_1^2"
+        else:
+            given = ",".join(str(k) for k in range(1, i))
+            label = f"R_{{{i}|{given}}}^2"
+        pieces.append(f"{fmt(dim_pct[i - 1])}% ({label})")
+    return f"R^2_disp = {fmt(overall_pct)}% = " + " + ".join(pieces)
+
+
+def regression_fit_quality_tex(X, Z, digits: int = 2) -> str:
+    """Port of ``regression_fit_quality_tex()``: MathJax label for plotly."""
+    comp = regression_fit_components(X, Z)
+    n_terms = comp["dim_ss"].size
+    if n_terms == 0 or not np.isfinite(comp["total_ss"]) or comp["total_ss"] <= 0:
+        return ""
+
+    dim_pct = 100 * comp["dim_ss"] / comp["total_ss"]
+    overall_pct = 100 * comp["overall_ss"] / comp["total_ss"]
+
+    def fmt(x):
+        return f"{round(float(x), digits):g}"
+
+    pieces = []
+    for i in range(1, n_terms + 1):
+        if i == 1:
+            label = "R_1^2"
+        else:
+            given = ",".join(str(k) for k in range(1, i))
+            label = f"R_{{{i} \\mid {given}}}^2"
+        pieces.append(f"{fmt(dim_pct[i - 1])}\\%\\,({label})")
+    body = f"R^2_{{disp}}={fmt(overall_pct)}\\%= " + " + ".join(pieces)
+    return f"\\({body}\\)"  # plotly::TeX() wraps in \( \)

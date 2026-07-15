@@ -212,7 +212,12 @@ def _split_numeric(data) -> tuple[np.ndarray, list[str], list[str], pd.DataFrame
         categorical = data.drop(columns=numeric.columns)
         X = numeric.to_numpy(dtype=float)
         col_names = [str(c) for c in numeric.columns]
-        row_names = [str(r) for r in data.index]
+        index = data.index
+        if isinstance(index, pd.RangeIndex) and index.start == 0 and index.step == 1:
+            # default pandas index: use R-style 1-based row names
+            row_names = [str(i + 1) for i in range(len(index))]
+        else:
+            row_names = [str(r) for r in index]
         Xcat = categorical if categorical.shape[1] > 0 else None
         return X, col_names, row_names, Xcat
 
