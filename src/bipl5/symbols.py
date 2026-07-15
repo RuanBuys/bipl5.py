@@ -107,3 +107,47 @@ def symbol_list() -> list[str]:
     ``-open``, ``-dot`` and ``-open-dot`` (e.g. ``"circle-open-dot"``).
     """
     return list(_BASE_SYMBOLS)
+
+
+def _symbol_variants() -> set[str]:
+    out = set()
+    for base in _BASE_SYMBOLS:
+        out.add(base)
+        out.add(base + "-open")
+        out.add(base + "-dot")
+        out.add(base + "-open-dot")
+    return out
+
+
+VALID_PLOTLY_SYMBOLS = _symbol_variants()
+
+
+def validate_symbols(symbols) -> list[str] | None:
+    """Return the invalid plotly symbol names, or ``None`` when all are valid
+    (port of ``validate_symbol()``)."""
+    invalid = [s for s in symbols if str(s) not in VALID_PLOTLY_SYMBOLS]
+    return invalid or None
+
+
+def pch_to_plotly_strict(pch) -> list[str]:
+    """Like :func:`pch_to_plotly` but erroring on unsupported numeric codes,
+    as ``format_samples()`` requires."""
+    out = []
+    for value in pch:
+        code = int(value)
+        if code not in PCH_TO_PLOTLY:
+            raise ValueError(
+                "One or more numeric pch values are not supported."
+            )
+        out.append(PCH_TO_PLOTLY[code])
+    return out
+
+
+def plotly_to_pch(symbols) -> list[int]:
+    """Reverse of :func:`pch_to_plotly`: first matching base-R code per
+    symbol name, ``19`` (solid circle) when a symbol has no pch equivalent —
+    port of ``format_samples_plotly_to_pch()``."""
+    reverse: dict[str, int] = {}
+    for code, name in PCH_TO_PLOTLY.items():
+        reverse.setdefault(name, code)
+    return [reverse.get(str(s), 19) for s in symbols]

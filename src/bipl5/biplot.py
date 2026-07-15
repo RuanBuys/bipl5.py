@@ -406,6 +406,23 @@ class Biplot:
             vec_dis=not is_cva,
         )
 
+        # replay any stored sample formatting so the new display matches
+        if self.meta.get("sample_format") is not None:
+            from .format_samples import (
+                get_state,
+                rebuild_mds_display,
+                should_update_means,
+            )
+
+            state = get_state(self, ez.n)
+            new_payl = rebuild_mds_display(
+                new_payl,
+                update_means=should_update_means(self, state),
+                state=state,
+                ez=self.meta["x"],
+                rebuild_tda=state.get("color") is not None,
+            )
+
         out = self._copy()
         out.displays = dict(self.displays)
         out.displays[pname] = new_payl
@@ -421,6 +438,13 @@ class Biplot:
             "ft_name": ft_name(pcs),
         }
         return out
+
+    def format_samples(
+        self, stratify: str = "col", by=None, col=None, pch=None
+    ) -> "Biplot":
+        from .format_samples import format_samples
+
+        return format_samples(self, stratify=stratify, by=by, col=col, pch=pch)
 
     def score_axes(self, digits: int = 2) -> "Biplot":
         from .score_axes import score_axes

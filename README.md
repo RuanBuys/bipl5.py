@@ -22,6 +22,7 @@ data = pd.read_csv("mydata.csv")
 bp = (
     bipl5.init_biplot(data, center=True, scale=False)
     .scale_mds("pca", classes=data["Species"])   # or "cva" / "pco" / "regress"
+    .format_samples(stratify="col", by="Species")  # colour the samples
     .score_axes()                                # optional: Alves reading errors
 )
 
@@ -38,6 +39,10 @@ JavaScript, vendored unchanged from the R package.
 More of the API:
 
 ```python
+# dual stratification: colour by one variable, symbol by another —
+# two independent legend sections, each toggling across the other
+bp = bp.format_samples(stratify="symbol", by="Band", pch=[15, 17])
+
 bp = bp.append_mds_display((1, 3))          # add a PC pair to the dropdown
 bp = bp.remove_mds_display("mdsDisplay_13") # and remove it again
 bp = bp.overlay_fit(True)                   # default fit-measure display mode
@@ -66,8 +71,8 @@ axes_coordinates(ez)     # calibrated tick marks for every biplot axis
 
 Implemented: PCA (incl. correlation biplots), CVA (incl. the `sample.opt`
 low-dimension strategy), PCO with regression axes, and regression biplots
-on user-supplied coordinates. Not yet ported: spline axes and
-`format_samples()` (see `TRANSLATION_PLAN.md` for the roadmap).
+on user-supplied coordinates. Not yet ported: spline axes (see
+`TRANSLATION_PLAN.md` for the roadmap).
 
 ## Contributing
 
