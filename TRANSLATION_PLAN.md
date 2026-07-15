@@ -298,7 +298,10 @@ earlier ones. Suggested order optimizes for an early end-to-end demo.
   `MoveLines`, `MoveDensities`, `compute_density_inflation`,
   `get_quads_axes`, `shorten_axes`, `obtain_zhat`, `equation`, MVEE.
 
-**Phase 2 — Ordination engine, PCA first**
+**Phase 2 — Ordination engine, PCA first** *(landed: `src/bipl5/ordination/`
+ports biplotEZ 2.2's biplot/PCA/CVA/PCO/regress/fit.measures/axes_coordinates
+from the CRAN source, MIT-licensed; spline axes and the Bhattacharyya
+low-dimension strategy still raise `NotImplementedError`)*
 - `ordination/base.py` + `pca.py` + `aesthetics.py` + `calibration.py` +
   `fit_measures.py`.
 - Numeric parity tests vs R fixtures (iris, with/without scaling,

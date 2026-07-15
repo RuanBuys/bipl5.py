@@ -10,7 +10,32 @@ $ pip install bipl5
 
 ## Usage
 
-- TODO
+The interactive `init_biplot()` pipeline is still under construction (see
+`TRANSLATION_PLAN.md`). The internal ordination engine — a Python port of the
+parts of the R package [biplotEZ](https://cran.r-project.org/package=biplotEZ)
+that bipl5 relies on — is available today:
+
+```python
+import pandas as pd
+from bipl5.ordination import biplot, axes_coordinates
+
+data = pd.read_csv("mydata.csv")
+
+bp = (
+    biplot(data, group_aes=data["Species"], scaled=True)
+    .pca(e_vects=(1, 2), show_class_means=True)   # or .cva() / .pco() / .regress()
+    .fit_measures()
+)
+
+bp.Z                     # sample coordinates in the biplot plane
+bp.axis_predictivity     # per-variable measures of fit
+axes_coordinates(bp)     # calibrated tick marks for every biplot axis
+```
+
+Implemented methods: PCA (incl. correlation biplots), CVA (incl. the
+`sample.opt` low-dimension strategy), PCO with regression axes, and
+regression biplots on user-supplied coordinates. Spline axes are not yet
+ported.
 
 ## Contributing
 
