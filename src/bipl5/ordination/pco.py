@@ -62,6 +62,7 @@ def pco(
     group_aes=None,
     show_class_means: bool = False,
     axes: str = "regression",
+    spline_control: dict | None = None,
     **dist_kwargs,
 ) -> EZBiplot:
     """Append PCO (classical MDS) elements to a biplot object.
@@ -72,19 +73,19 @@ def pco(
     ``D = sqrt(D_num^2 + D_cat^2)``, exactly as in ``PCO.biplot``. The
     double-centered matrix ``B = -0.5 J D^2 J`` is decomposed and sample
     coordinates are ``Z = V sqrt(Lambda)`` restricted to ``e_vects``
-    (1-based). ``axes="regression"`` fits linear calibrated axes by
-    regressing the (scaled) data on ``Z``; ``axes="splines"`` is not yet
-    implemented in the Python port.
+    (1-based).
+
+    ``axes="regression"`` fits linear calibrated axes by regressing the
+    (scaled) data on ``Z``; ``axes="splines"`` fits non-linear B-spline
+    axes (port of biplotEZ 2.3's C++-backed optimizer — computation is
+    deferred to ``axes_coordinates()``, and can be tuned/sped up via
+    ``spline_control``, see
+    :func:`~bipl5.ordination.splines.spline_axis_control`).
 
     Extra keyword arguments are forwarded to the distance function(s),
     mirroring ``...`` in R.
     """
-    if axes == "splines":
-        raise NotImplementedError(
-            "Spline axes for PCO are not yet implemented in bipl5.py; "
-            "use axes='regression'."
-        )
-    if axes != "regression":
+    if axes not in ("regression", "splines"):
         raise ValueError("axes must be one of 'regression', 'splines'.")
     if dim_biplot not in (1, 2, 3):
         raise ValueError("Only 1D, 2D and 3D biplots")
@@ -148,11 +149,15 @@ def pco(
     bp.Lambda = Lambda
     bp.PCOaxes = axes
 
-    if X is not None:
+    if axes == "regression" and X is not None:
         Mr = np.linalg.solve(Z.T @ Z, Z.T @ X)          # dim x p
         bp.ax_one_unit = Mr.T / np.sum(Mr.T**2, axis=1, keepdims=True)
     else:
         bp.ax_one_unit = None
+    if axes == "splines":
+        from .splines import spline_axis_control
+
+        bp.spline_control = spline_axis_control(**(spline_control or {}))
 
     bp.class_means = False if bp.g == 1 else bool(show_class_means)
     if bp.class_means:

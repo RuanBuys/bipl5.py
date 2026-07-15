@@ -25,7 +25,11 @@ from .builders import (
     plot_scaffolding_mds,
     slider_control,
 )
-from .mds_display import mds_display_new
+from .mds_display import (
+    mds_display_add_layout,
+    mds_display_add_traces,
+    mds_display_new,
+)
 
 __all__ = [
     "zero_to_near_zero",
@@ -320,4 +324,182 @@ def build_one_mds_display(
             "translated_axes_coordinates": tda_out["shift"],
         }
     )
+    return MdsDisplay(bundle)
+
+
+def get_gradients(z: np.ndarray) -> np.ndarray:
+    """Port of ``get_gradients()``: central-difference slopes along a spline
+    curve, NaN at both endpoints."""
+    z = np.asarray(z, dtype=float)
+    m = np.full(z.shape[0], np.nan)
+    m[1:-1] = (z[2:, 1] - z[:-2, 1]) / (z[2:, 0] - z[:-2, 0])
+    return m
+
+
+def build_spline_mds_display(
+    ez,
+    group_codes,
+    group_levels,
+    color,
+    symbol,
+    z_axes: list,
+) -> dict:
+    """Port of ``build_spline_mdsDisplay()``: minimal spline-axes bundle.
+
+    Sample points with bare hover text (no XHat), spline axis curves with
+    tick annotations at the labelled positions, and a bounding circle.
+    No translated density axes, no slider, no fit measures.
+    """
+    from ..printing import BiplotData, MdsDisplay
+    from .builders import check_inside_circle
+
+    payl = mds_display_new()
+    payl = plot_scaffolding_mds(
+        payl,
+        dpquality="",
+        basis=ez.e_vects,
+        PC_toggle=False,
+        ax_pred=False,
+        TDA=False,
+        vec_dis=False,
+    )
+
+    obj = {
+        "Z": ez.Z,
+        "group_codes": group_codes,
+        "group_levels": group_levels,
+        "n": ez.n,
+        "x": np.asarray(ez.X, dtype=float),
+        "row_names": ez.row_names,
+        "col_names": ez.col_names,
+        "XHat": None,
+        "sample_predictivity": None,
+    }
+    payl = insert_z_coo(payl, obj, p_ly_pch=symbol, col=color, visible=True)
+
+    p = ez.p
+    radius = float(np.max(np.abs(np.asarray(ez.Z)))) * 1.2
+    theta = np.linspace(0, 2 * np.pi, 200)
+    circle = np.column_stack([radius * np.cos(theta), radius * np.sin(theta)])
+
+    z_axes = check_inside_circle(z_axes, radius)
+
+    traces: list = []
+    annotations: list = []
+    for i in range(p):
+        ax = np.asarray(z_axes[i], dtype=float)
+        ax_name = f"<b>{ez.col_names[i]}</b>"
+        endp = ax[int(np.argmax(ax[:, 2])), :2]
+        pos = "left" if endp[0] < 0 else "right"
+
+        idx = np.where(ax[:, 3] == 1)[0]
+        full_m = get_gradients(ax)
+        m_at_ticks = full_m[idx]
+        keep = ~np.isnan(m_at_ticks)
+        idx, m_at_ticks = idx[keep], m_at_ticks[keep]
+
+        traces.append(
+            {
+                "x": ax[:, 0],
+                "y": ax[:, 1],
+                "type": "scatter",
+                "mode": "lines",
+                "line": {"color": "grey", "width": 1, "simplify": False},
+                "name": ez.col_names[i],
+                "legendgroup": f"Ax{i + 1}",
+                "meta": ["axis"],
+                "xaxis": "x",
+                "yaxis": "y",
+                "customdata": full_m,
+                "visible": True,
+                "hovertext": np.round(ax[:, 2], 1),
+                "hoverinfo": "text",
+            }
+        )
+
+        for k, ki in enumerate(idx):
+            ang = float(np.arctan(m_at_ticks[k]))
+            ang_deg = -ang * 180 / np.pi
+            annotations.append(
+                {
+                    "x": float(ax[ki, 0]),
+                    "y": float(ax[ki, 1]),
+                    "text": f"{ax[ki, 2]:g}",
+                    "showarrow": False,
+                    "textangle": ang_deg,
+                    "visible": True,
+                    "yshift": -12 * np.cos(ang),
+                    "xshift": 12 * np.sin(ang),
+                    "meta": ["axis"],
+                    "xref": "x",
+                    "yref": "y",
+                    "customdata": i + 1,
+                    "font": {"size": 10},
+                }
+            )
+            annotations.append(
+                {
+                    "x": float(ax[ki, 0]),
+                    "y": float(ax[ki, 1]),
+                    "text": "&#124;",
+                    "showarrow": False,
+                    "textangle": ang_deg,
+                    "visible": True,
+                    "meta": ["axis"],
+                    "xref": "x",
+                    "yref": "y",
+                    "customdata": i + 1,
+                    "font": {"size": 8},
+                }
+            )
+
+        traces.append(
+            {
+                "x": [float(endp[0])],
+                "y": [float(endp[1])],
+                "text": ax_name,
+                "type": "scatter",
+                "mode": "text",
+                "textposition": pos,
+                "legendgroup": f"Ax{i + 1}",
+                "showlegend": False,
+                "textfont": {"size": 12},
+                "meta": ["axis"],
+                "xaxis": "x",
+                "yaxis": "y",
+                "visible": True,
+            }
+        )
+
+    traces.append(
+        {
+            "x": circle[:, 0],
+            "y": circle[:, 1],
+            "type": "scatter",
+            "mode": "lines",
+            "line": {"color": "green", "width": 0.6},
+            "name": "circle",
+            "showlegend": False,
+            "meta": ["circle"],
+            "xaxis": "x",
+            "yaxis": "y",
+            "visible": True,
+            "hoverinfo": "none",
+        }
+    )
+
+    payl = mds_display_add_traces(payl, traces)
+    payl = mds_display_add_layout(payl, {"annotations": annotations})
+
+    bundle = {
+        "mds": payl,
+        "fit_qual": "",
+        "Data": BiplotData(
+            {
+                "sample_coordinates": np.asarray(ez.Z, dtype=float),
+                "axes_coordinates": z_axes,
+                "translated_axes_coordinates": None,
+            }
+        ),
+    }
     return MdsDisplay(bundle)

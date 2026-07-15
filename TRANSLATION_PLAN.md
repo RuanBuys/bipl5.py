@@ -335,7 +335,14 @@ ANSI colours, rendered by `Biplot`/`MdsDisplay`/`BiplotData`/`FitMeasures`
   `score_axes`, `append/remove_mds_display`, `extract`, `overlay_fit`,
   `BiplotFit.plot()`, `__repr__` tree printers, `colorpal`, `symbol_list`.
 
-**Phase 5 — Remaining ordinations**
+**Phase 5 — Remaining ordinations** *(landed in full: CVA, regression
+biplots and PCO regression axes shipped with Phase 3; PCO spline axes
+ported from the biplotEZ 2.3 GitHub sources — `ordination/splines.py`
+reimplements the `LnjTinyNew.cpp` loss + Nelder-Mead amoeba (the C++ that
+replaced the CRAN Fortran) and `biplot.spline.axis()`, incl. the 2.3
+change passing `x$X` instead of `raw.X`, which removes bipl5's swap trick;
+`bipl5_spline.js` extracted from `insert_spline_js()` and attached by
+`plot()` for spline biplots. Tunable via `spline_control=`, R defaults.)*
 - CVA (incl. `Zmeans`, class means, `weighted_cva`, `low_dim`), regression
   biplots (incl. `R²` MathJax quality string), PCO with regression axes,
   then PCO spline axes + `bipl5_spline.js` path.

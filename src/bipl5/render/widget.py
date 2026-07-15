@@ -56,6 +56,11 @@ def bipl5_js_source() -> str:
     return _JS_PATH.read_text(encoding="utf-8")
 
 
+def bipl5_spline_js_source() -> str:
+    """The spline-axis handler, extracted from R's ``insert_spline_js()``."""
+    return (_JS_DIR / "bipl5_spline.js").read_text(encoding="utf-8")
+
+
 class Bipl5Widget:
     """An interactive bipl5 figure ready to render as HTML.
 
@@ -64,15 +69,27 @@ class Bipl5Widget:
     - ``show()`` opens the widget in a browser.
     - ``figure`` and ``payload`` expose the underlying plotly figure dict
       and the JS payload for inspection.
+
+    ``js`` selects the attached behaviour: ``"bipl5"`` (the full linear-axis
+    handler), ``"spline"`` (the spline-axis handler), or ``None``.
     """
 
-    def __init__(self, figure: dict, payload: dict | None):
+    def __init__(self, figure: dict, payload: dict | None, js: str = "bipl5"):
         self.figure = figure
         self.payload = payload
+        self.js = js if payload is not None else None
 
     def _post_script(self) -> str:
-        if self.payload is None:
+        if self.payload is None or self.js is None:
             return ""
+        if self.js == "spline":
+            return (
+                bipl5_spline_js_source()
+                + "\nwindow.bipl5SplineAttach(document.getElementById('{plot_id}'), "
+                + "null, "
+                + payload_json(self.payload)
+                + ");"
+            )
         return (
             bipl5_js_source()
             + "\nwindow.bipl5Attach(document.getElementById('{plot_id}'), "

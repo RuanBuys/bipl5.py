@@ -34,6 +34,7 @@ from .fit_measures import (
 from .pca import pca
 from .pco import euclidean_dist, extended_matching_coefficient, pco
 from .regress import regress
+from .splines import spline_axis, spline_axis_control
 
 __all__ = [
     "EZBiplot",
@@ -54,6 +55,8 @@ __all__ = [
     "fit_quality_string",
     "euclidean_dist",
     "extended_matching_coefficient",
+    "spline_axis",
+    "spline_axis_control",
     "as_factor",
     "indmat",
     "EZ_COL",

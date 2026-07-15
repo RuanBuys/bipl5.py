@@ -215,6 +215,11 @@ class Biplot:
         if annotations:
             layout["annotations"] = annotations
 
+        if is_spline:
+            # spline biplots attach the lightweight spline handler only
+            figure = {"data": data, "layout": layout}
+            return Bipl5Widget(figure, {"p": ez.p}, js="spline")
+
         mds_for_js: dict[str, Any] = {}
         for name in available:
             label = pc_map[name]

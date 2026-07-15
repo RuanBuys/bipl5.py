@@ -123,6 +123,8 @@ class EZBiplot:
     Lambda: np.ndarray | None = None
     dist_func: Callable | None = None
     dist_func_cat: Callable | None = None
+    spline_control: dict | None = None
+    display_group: tuple | None = None  # set by format_samples on CVA
 
     # aesthetics (dicts; see aesthetics.py)
     samples: dict | None = None

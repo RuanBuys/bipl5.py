@@ -35,9 +35,9 @@ def test_pco_non_euclidean_warns(data):
         pco(biplot(data), Dmat=D)
 
 
-def test_pco_spline_axes_not_implemented(data):
-    with pytest.raises(NotImplementedError, match="[Ss]pline"):
-        pco(biplot(data), axes="splines")
+def test_pco_rejects_unknown_axes(data):
+    with pytest.raises(ValueError, match="regression"):
+        pco(biplot(data), axes="nope")
 
 
 def test_pco_class_means(data, groups):

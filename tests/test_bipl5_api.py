@@ -105,8 +105,8 @@ def test_scale_mds_other_types(frame):
     assert reg.meta["fit_quality"].startswith("R^2_disp")
     assert reg.meta["fit_quality_plotly"].startswith("\\(")
 
-    with pytest.raises(NotImplementedError, match="[Ss]pline"):
-        spec.scale_mds("pco", axes="splines")
+    with pytest.raises(ValueError, match="regression"):
+        spec.scale_mds("pco", axes="nope")
 
 
 def test_append_and_remove_display(pca_bp):

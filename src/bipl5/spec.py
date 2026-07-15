@@ -16,6 +16,7 @@ import pandas as pd
 from .biplot import Biplot, ft_name, mds_display_name, pair_label
 from .display.build_one import (
     build_one_mds_display,
+    build_spline_mds_display,
     clean_linear_axes_coordinates,
     restore_raw_x,
     zero_to_near_zero,
@@ -273,6 +274,7 @@ def _build_pco(base, kwargs, common):
     eigenvectors = _pull_arg(kwargs, ("eigenvectors", "e_vects"))
     show_class_means = _pull_arg(kwargs, _SHOW_ALIASES)
     axes = _pull_arg(kwargs, ("axes",))
+    spline_control = _pull_arg(kwargs, ("spline_control",))
     # remaining kwargs are forwarded to the distance function, as in R
 
     call: dict[str, Any] = dict(kwargs)
@@ -291,6 +293,8 @@ def _build_pco(base, kwargs, common):
         call["show_class_means"] = show_class_means
     if axes is not None:
         call["axes"] = axes
+    if spline_control is not None:
+        call["spline_control"] = spline_control
 
     args = {
         k: v
@@ -302,6 +306,7 @@ def _build_pco(base, kwargs, common):
             ("eigenvectors", eigenvectors),
             ("show_class_means", show_class_means),
             ("axes", axes),
+            ("spline_control", spline_control),
         )
         if v is not None
     }
@@ -456,25 +461,38 @@ def _compile_cva(ez) -> Biplot:
 
 def _compile_pco(ez) -> Biplot:
     ez = _prepare(ez, with_fit=False)
+    # spline axes are computed here, on the centered/scaled matrix
+    # (biplotEZ 2.3 passes x$X directly, so no raw.X swap is needed)
     z_axes = zero_to_near_zero(axes_coordinates(ez))
     ez = restore_raw_x(ez)
     color, symbol, (codes, levels) = _display_aes(ez)
     pcs = (1, 2)
+    is_spline = ez.PCOaxes == "splines"
 
-    z_axes = clean_linear_axes_coordinates(ez, z_axes)
-    bundle = build_one_mds_display(
-        ez,
-        group_codes=codes,
-        group_levels=levels,
-        color=color,
-        symbol=symbol,
-        x_ref=ez,
-        include_polygons=True,
-        dim_prefix="Dim",
-        ax_pred=False,
-        vec_dis=False,
-        z_axes=z_axes,
-    )
+    if is_spline:
+        bundle = build_spline_mds_display(
+            ez,
+            group_codes=codes,
+            group_levels=levels,
+            color=color,
+            symbol=symbol,
+            z_axes=z_axes,
+        )
+    else:
+        z_axes = clean_linear_axes_coordinates(ez, z_axes)
+        bundle = build_one_mds_display(
+            ez,
+            group_codes=codes,
+            group_levels=levels,
+            color=color,
+            symbol=symbol,
+            x_ref=ez,
+            include_polygons=True,
+            dim_prefix="Dim",
+            ax_pred=False,
+            vec_dis=False,
+            z_axes=z_axes,
+        )
 
     return _single_biplot(
         ez,
@@ -484,7 +502,7 @@ def _compile_pco(ez) -> Biplot:
         dim_prefix="Dim",
         biplot_type="pco",
         fit_quality="",
-        spline=False,
+        spline=is_spline,
     )
 
 

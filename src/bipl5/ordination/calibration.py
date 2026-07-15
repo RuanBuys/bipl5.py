@@ -106,9 +106,16 @@ def axes_coordinates(x: EZBiplot) -> list[np.ndarray]:
         Xhat = Xhat + x.means
 
     if x.PCOaxes == "splines":
-        raise NotImplementedError(
-            "Spline axis coordinates are not yet implemented in bipl5.py."
-        )
+        from .splines import spline_axis
+
+        control = dict(x.spline_control or {})
+        rng = np.random.default_rng(control.get("seed"))
+        return [
+            spline_axis(
+                j, x.Z, x.X, x.means, x.sd, control=control, rng=rng
+            )
+            for j in ax_aes["which"]
+        ]
 
     if x.ax_one_unit is None:
         raise ValueError("this biplot has no linear axis directions.")

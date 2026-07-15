@@ -87,3 +87,62 @@ def test_js_attaches_and_controls_work(biplot_html):
     assert result["pcKey"] == "PC 1 & 3"
     assert result["fitOpen"] is True
     assert result["fitTraces"] == 5
+
+
+@pytest.fixture(scope="module")
+def spline_html(tmp_path_factory):
+    import numpy as np
+    import pandas as pd
+
+    import bipl5
+
+    rng = np.random.default_rng(7)
+    t = rng.uniform(-2, 2, size=40)
+    frame = pd.DataFrame(
+        {"a": t, "b": t**2 + rng.normal(scale=0.3, size=40), "c": np.sin(t)}
+    )
+    bp = bipl5.init_biplot(frame).scale_mds(
+        "pco",
+        axes="splines",
+        spline_control={
+            "gamma": 2, "bigsigmaactivate": 1, "nmu": 25,
+            "itmax": 200, "seed": 1, "verbose": False,
+        },
+    )
+    path = tmp_path_factory.mktemp("html") / "spline.html"
+    bp.plot().save(path)
+    return path
+
+
+@pytest.mark.skipif(
+    not Path(_CHROMIUM).exists(), reason="no Chromium available"
+)
+def test_spline_js_attaches_and_toggles(spline_html):
+    errors = []
+    with playwright.sync_playwright() as pw:
+        browser = pw.chromium.launch(executable_path=_CHROMIUM)
+        page = browser.new_page()
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(spline_html.as_uri())
+        page.wait_for_timeout(2500)
+
+        result = page.evaluate(
+            """async () => {
+            const el = document.querySelector('.plotly-graph-div');
+            const out = {attached: typeof window.bipl5SplineAttach === 'function'};
+            const idx = el.data.findIndex(tr =>
+                tr.legendgroup === 'Ax1' && tr.mode === 'lines');
+            el.emit('plotly_legendclick', {curveNumber: idx, data: el.data});
+            await new Promise(r => setTimeout(r, 1000));
+            out.ax1Visible = String(el.data[idx].visible);
+            out.hiddenAnnots = el.layout.annotations.filter(a =>
+                a.customdata === 1 && a.visible === false).length;
+            return out;
+        }"""
+        )
+        browser.close()
+
+    assert not errors, f"page errors: {errors}"
+    assert result["attached"] is True
+    assert result["ax1Visible"] == "legendonly"
+    assert result["hiddenAnnots"] > 0

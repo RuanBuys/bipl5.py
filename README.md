@@ -70,9 +70,25 @@ axes_coordinates(ez)     # calibrated tick marks for every biplot axis
 ```
 
 Implemented: PCA (incl. correlation biplots), CVA (incl. the `sample.opt`
-low-dimension strategy), PCO with regression axes, and regression biplots
-on user-supplied coordinates. Not yet ported: spline axes (see
-`TRANSLATION_PLAN.md` for the roadmap).
+low-dimension strategy), PCO with regression **or spline** axes, and
+regression biplots on user-supplied coordinates. Spline axes follow the
+biplotEZ 2.3 GitHub sources (the C++-backed optimizer not yet on CRAN),
+reimplemented in NumPy:
+
+```python
+bp = bipl5.init_biplot(data).scale_mds("pco", axes="splines")
+bp.plot()   # non-linear calibrated axes; click a curve to read predictions
+
+# the optimizer multi-starts 250 times per axis by default (like R);
+# tune with spline_control for faster, rougher fits:
+bp = bipl5.init_biplot(data).scale_mds(
+    "pco", axes="splines",
+    spline_control={"gamma": 25, "bigsigmaactivate": 2, "seed": 1},
+)
+```
+
+This completes the feature surface of the R package's retained API (see
+`TRANSLATION_PLAN.md` for the full phase history).
 
 ## Contributing
 
