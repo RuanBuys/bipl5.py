@@ -116,7 +116,7 @@ def score_axes(bp: Biplot, digits: int = 2) -> Biplot:
             for i, level in enumerate(levels)
         }
 
-        new_bundle = dict(bundle)
+        new_bundle = type(bundle)(bundle)  # preserve MdsDisplay
         new_bundle["mds"] = dict(bundle["mds"])
         traces = []
         for trace in bundle["mds"]["trace_data"]:

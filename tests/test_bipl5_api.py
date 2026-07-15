@@ -173,11 +173,10 @@ def test_score_axes_adds_error_column(pca_bp):
     # original object untouched
     original = pca_bp.displays["mdsDisplay_12"]["mds"]["trace_data"][0]["hovertext"][0]
     assert "Error" not in original
-    assert "score_axes" in repr(scored)
 
 
 def test_repr(pca_bp):
     text = repr(pca_bp)
-    assert "bipl5 biplot [pca]" in text
-    assert "mdsDisplay_12" in text
-    assert "PC 1 & 2" in text
+    assert "bipl5_biplot [PCA]" in text
+    assert "mdsDisplay_12 [PC 1 & 2] <bipl5_mdsDisplay>" in text
+    assert "fit_measures <bipl5_fitmeasures>" in text

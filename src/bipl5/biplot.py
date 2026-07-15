@@ -309,11 +309,13 @@ class Biplot:
         }
         if self.fit_measures is not None:
             kept_ft = {v["ft_name"] for v in out.meta["pc_info"].values()}
-            out.fit_measures = {
-                k: v
-                for k, v in self.fit_measures.items()
-                if k in FIT_GRAPH_NAMES or k in kept_ft
-            }
+            out.fit_measures = type(self.fit_measures)(
+                {
+                    k: v
+                    for k, v in self.fit_measures.items()
+                    if k in FIT_GRAPH_NAMES or k in kept_ft
+                }
+            )
         return out
 
     def remove_mds_display(self, name: str) -> "Biplot":
@@ -428,7 +430,7 @@ class Biplot:
         out.displays[pname] = new_payl
 
         if out.fit_measures is not None:
-            out.fit_measures = dict(out.fit_measures)
+            out.fit_measures = type(out.fit_measures)(out.fit_measures)
             out.fit_measures[ft_name(pcs)] = fit_table_traces(new_ez)
 
         out.meta["pc_info"] = dict(self.meta["pc_info"])
@@ -451,25 +453,11 @@ class Biplot:
 
         return score_axes(self, digits=digits)
 
-    # ── printing ────────────────────────────────────────────────────────
+    # ── printing (port of print.bipl5_biplot) ─────────────────────────
 
     def __repr__(self) -> str:
-        ez = self.meta["x"]
-        lines = [
-            f"bipl5 biplot [{self.biplot_type}] "
-            f"(n={ez.n}, p={ez.p}, groups={len(self.meta['group'][1])})"
-        ]
-        quality = self.meta.get("fit_quality")
-        if quality:
-            lines.append(f"  {quality}")
-        lines.append("  mdsDisplays:")
-        for name, info in self.meta["pc_info"].items():
-            marker = "*" if name in self.displays else " "
-            lines.append(f"   {marker} {name}  ({info['label']})")
-        if self.fit_measures is not None:
-            graphs = ", ".join(FIT_GRAPH_NAMES)
-            lines.append(f"  fit_measures: {graphs}")
-        if self.meta.get("reading_errors"):
-            lines.append("  score_axes: reading errors in hover tables")
-        lines.append("  plot() renders the interactive biplot")
-        return "\n".join(lines)
+        from .printing import _painter, _use_color, format_biplot_lines, render, tree_symbols
+
+        return render(
+            format_biplot_lines(self, tree_symbols(), _painter(_use_color()))
+        )

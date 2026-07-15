@@ -622,11 +622,11 @@ def _rebuild_tda_layer(bundle: dict, state: dict, ez) -> dict:
         col=color_spec["values"],
     )
 
-    bundle = dict(bundle)
+    bundle = type(bundle)(bundle)  # preserve MdsDisplay through the copy
     bundle["mds"] = tda_out["mds"]
     bundle["m"] = tda_out["m"]
     bundle["shift"] = tda_out["shift"]
-    bundle["Data"] = dict(bundle["Data"])
+    bundle["Data"] = type(bundle["Data"])(bundle["Data"])
     bundle["Data"]["translated_axes_coordinates"] = tda_out["shift"]
     slider_control(
         {"mds": bundle["mds"], "m": tda_out["m"], "shift": tda_out["shift"]},
@@ -662,7 +662,7 @@ def rebuild_mds_display(bundle, update_means, state, ez=None, rebuild_tda=False)
             points, spec, template=traces[mean_idx[0]] if mean_idx else None
         )
 
-    bundle = dict(bundle)
+    bundle = type(bundle)(bundle)  # preserve MdsDisplay through the copy
     bundle["mds"] = dict(bundle["mds"])
     bundle["mds"]["trace_data"] = _replace_trace_blocks(
         traces, sample_idx + legend_idx, rebuilt_samples, mean_idx, rebuilt_means

@@ -324,11 +324,13 @@ CVA/PCO(regression axes)/regress landed with it)*
   annotation counts, slider config, hover-table strings vs R JSON fixtures.
 - **Milestone: `init_biplot(iris).scale_mds("pca").plot()` fully interactive.**
 
-**Phase 4 — API verbs** *(landed: `format_samples` — single + dual
+**Phase 4 — API verbs** *(landed in full: `format_samples` — single + dual
 stratification, TDA density rebuild, `append_mds_display` state replay —
 plus `score_axes`, `append/remove_mds_display`, `extract`, `overlay_fit`,
-`BiplotFit.plot()`, `colorpal`, `symbol_list`, plain `__repr__`s.
-Remaining: the full tree-style printers)*
+`BiplotFit.plot()`, `colorpal`, `symbol_list`, and the tree-style printers
+in `printing.py` — locale-safe unicode/ASCII symbols and crayon-equivalent
+ANSI colours, rendered by `Biplot`/`MdsDisplay`/`BiplotData`/`FitMeasures`
+`__repr__`s)*
 - `format_samples` (single + dual stratification + TDA density rebuild),
   `score_axes`, `append/remove_mds_display`, `extract`, `overlay_fit`,
   `BiplotFit.plot()`, `__repr__` tree printers, `colorpal`, `symbol_list`.

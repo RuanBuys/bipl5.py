@@ -12,6 +12,7 @@ from ..ordination.aesthetics import axes as set_axes
 from ..ordination.aesthetics import means as set_means
 from ..ordination.calibration import axes_coordinates
 from ..ordination.fit_measures import fit_quality_string
+from ..printing import BiplotData, MdsDisplay
 from ..rcompat import approx, pretty
 from ..symbols import pch_to_plotly
 from .builders import (
@@ -312,9 +313,11 @@ def build_one_mds_display(
     }
     bundle = slider_control(bundle, n_inside=17, n_outside=4)
     bundle["fit_qual"] = fit_qual
-    bundle["Data"] = {
-        "sample_coordinates": np.asarray(ez.Z, dtype=float),
-        "axes_coordinates": z_axes,
-        "translated_axes_coordinates": tda_out["shift"],
-    }
-    return bundle
+    bundle["Data"] = BiplotData(
+        {
+            "sample_coordinates": np.asarray(ez.Z, dtype=float),
+            "axes_coordinates": z_axes,
+            "translated_axes_coordinates": tda_out["shift"],
+        }
+    )
+    return MdsDisplay(bundle)

@@ -44,6 +44,7 @@ from .ordination.fit_measures import (
     regression_fit_quality,
     regression_fit_quality_tex,
 )
+from .printing import FitMeasures
 from .symbols import pch_to_plotly
 
 __all__ = ["init_biplot", "BiplotSpec"]
@@ -402,13 +403,15 @@ def _compile_pca(ez) -> Biplot:
         include_polygons=True,
     )
 
-    fit_measures = {
-        "CumPred": add_axis_pred_traces(ez),
-        "CumAd": add_axis_adeq_traces(ez),
-        "VarExp": add_prop_variance_traces(ez),
-        "Scree": add_scree_traces(ez),
-        ft_name(pcs): fit_table_traces(ez),
-    }
+    fit_measures = FitMeasures(
+        {
+            "CumPred": add_axis_pred_traces(ez),
+            "CumAd": add_axis_adeq_traces(ez),
+            "VarExp": add_prop_variance_traces(ez),
+            "Scree": add_scree_traces(ez),
+            ft_name(pcs): fit_table_traces(ez),
+        }
+    )
 
     return _single_biplot(
         ez,
