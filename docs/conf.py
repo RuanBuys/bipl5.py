@@ -1,36 +1,49 @@
-# Configuration file for the Sphinx documentation builder.
+# Sphinx configuration for the bipl5 documentation.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+# Tutorials are MyST-Markdown notebooks executed at build time, so every
+# page embeds live interactive biplots. The API reference is generated
+# with autodoc from the package's RST-flavoured docstrings.
 
-# -- Project information -----------------------------------------------------
+import os
+import sys
 
-project = u"bipl5"
-copyright = u"2026, Ruan Buys"
-author = u"Ruan Buys"
+sys.path.insert(0, os.path.abspath("../src"))
 
-# -- General configuration ---------------------------------------------------
+project = "bipl5"
+copyright = "2026, Ruan Buys"
+author = "Ruan Buys"
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
     "myst_nb",
-    "autoapi.extension",
-    "sphinx.ext.napoleon",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_copybutton",
 ]
-autoapi_dirs = ["../src"]
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "make.bat", "Makefile"]
 
-# -- Options for HTML output -------------------------------------------------
+# ── MyST / notebook execution ───────────────────────────────────────────────
+myst_enable_extensions = ["colon_fence", "dollarmath"]
+nb_execution_mode = "auto"          # text-based notebooks are always executed
+nb_execution_timeout = 600
+nb_execution_raise_on_error = True
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"
+# ── autodoc ─────────────────────────────────────────────────────────────────
+autodoc_member_order = "bysource"
+autodoc_typehints = "description"
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "pandas": ("https://pandas.pydata.org/docs", None),
+}
+
+# ── HTML output ─────────────────────────────────────────────────────────────
+html_theme = "furo"
+html_title = "bipl5"
+html_theme_options = {
+    "source_repository": "https://github.com/RuanBuys/bipl5.py",
+    "source_branch": "main",
+    "source_directory": "docs/",
+}

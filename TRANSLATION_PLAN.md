@@ -347,7 +347,11 @@ change passing `x$X` instead of `raw.X`, which removes bipl5's swap trick;
   biplots (incl. `R²` MathJax quality string), PCO with regression axes,
   then PCO spline axes + `bipl5_spline.js` path.
 
-**Phase 6 — Polish & release**
+**Phase 6 — Polish & release** *(docs landed: Sphinx + MyST-NB + furo on
+the Read the Docs config, with six executed tutorials embedding live
+widgets, three guides incl. the R-to-Python migration table, autodoc API
+reference, and a real changelog. Remaining: third-party license notices,
+CI, packaging metadata, PyPI release.)*
 - Optional alpha-bags/concentration ellipses; docs site (the existing
   `docs/` Sphinx skeleton + a worked notebook per biplot type); README
   rewrite; API reference; version 0.2.0 to PyPI; port the R vignettes

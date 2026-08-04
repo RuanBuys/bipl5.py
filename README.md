@@ -8,6 +8,18 @@ Create reactive biplots
 $ pip install bipl5
 ```
 
+## Documentation
+
+Full documentation — executed tutorials with live widgets for every
+biplot type, an R-to-Python migration guide, and the API reference —
+lives in `docs/` (Sphinx + MyST-NB, Read the Docs-ready). Build locally
+with:
+
+```bash
+pip install -e . -r docs/requirements.txt
+sphinx-build -b html docs docs/_build/html
+```
+
 ## Usage
 
 The interactive pipeline mirrors the R package, with method chaining in
