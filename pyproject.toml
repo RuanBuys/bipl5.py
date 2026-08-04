@@ -15,6 +15,18 @@ plotly = ">=5.15"
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.0"
 
+# mirrors docs/requirements.txt (which Read the Docs installs via pip);
+# lets local builds use `poetry install --with docs`
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = ">=8"
+myst-nb = ">=1.1"
+furo = "*"
+sphinx-copybutton = "*"
+ipykernel = "*"
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
