@@ -35,6 +35,35 @@ The user-facing pipeline API. For the internal ordination engine see
 .. autoclass:: bipl5.FitMeasures
 ```
 
+## Static biplots
+
+Static, publication-ready rendering with matplotlib (see
+{doc}`../tutorials/static-biplots`).
+
+```{eval-rst}
+.. autofunction:: bipl5.static.plot_static
+
+.. autoclass:: bipl5.static.StaticBiplot
+   :members:
+
+.. autofunction:: bipl5.static.add_calibrated_axes
+
+.. autoclass:: bipl5.static.CalibratedAxes
+   :members: compute_layout
+
+.. autoclass:: bipl5.static.CalibratedAxis
+   :members: from_coordinates
+
+.. autoclass:: bipl5.static.AxisStyle
+
+.. autoclass:: bipl5.static.AxisCalibration
+   :members:
+
+.. autofunction:: bipl5.static.axis_calibration
+
+.. autodata:: bipl5.static.plot.ZORDER
+```
+
 ## Helpers
 
 ```{eval-rst}

@@ -494,7 +494,7 @@ def _compile_pco(ez) -> Biplot:
             z_axes=z_axes,
         )
 
-    return _single_biplot(
+    bp = _single_biplot(
         ez,
         bundle,
         None,
@@ -504,6 +504,12 @@ def _compile_pco(ez) -> Biplot:
         fit_quality="",
         spline=is_spline,
     )
+    if is_spline:
+        # the display keeps only the part inside its bounding circle; the
+        # static renderer clips to its own window, so keep the full curves
+        # (recomputing them would rerun the spline optimiser)
+        bp.meta["spline_axes"] = z_axes
+    return bp
 
 
 def _compile_regress(ez) -> Biplot:

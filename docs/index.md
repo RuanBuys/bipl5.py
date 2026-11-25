@@ -50,6 +50,7 @@ bp = (
 )
 bp.plot()                    # display in a notebook…
 bp.plot().save("biplot.html")  # …or save standalone offline HTML
+bp.plot_static().save("biplot.pdf")  # static, publication-ready figure
 ```
 
 ```{toctree}
@@ -62,6 +63,7 @@ tutorials/pco-biplots
 tutorials/regression-biplots
 tutorials/formatting-samples
 tutorials/axis-scoring
+tutorials/static-biplots
 ```
 
 ```{toctree}

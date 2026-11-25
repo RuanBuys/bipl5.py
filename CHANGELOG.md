@@ -22,6 +22,15 @@ Complete Python port of the R package's `init_biplot()` pipeline.
   browser preview.
 - Documentation: executed tutorials with live widgets, guides (including
   an R-to-Python migration table) and a full API reference.
+- Static, publication-ready biplots: `Biplot.plot_static()` (and
+  `plot_static()` on ordination objects) renders any 2-D biplot with
+  matplotlib, porting the R package's `wrap_bipl5_gg()` /
+  `geom_calibrated_axis()`. Calibrated axes are laid out at draw time so
+  tick marks always reach the panel edge; spline axes are drawn as curves;
+  `format_samples()` styling (incl. dual stratification), class means,
+  captions and themes (`"bw"`, `"minimal"`, `"classic"`, `"biplotEZ"`)
+  carry over. `bipl5.static.add_calibrated_axes()` adds calibrated axes to
+  any matplotlib plot. matplotlib is now a dependency.
 
 ## v0.1.0 (24/03/2026)
 

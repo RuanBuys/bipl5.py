@@ -36,6 +36,8 @@ init_biplot(iris) |>
 | `extract(x, fit_measures$CumPred)` | `.extract("fit_measures.CumPred")` | returns a plottable `BiplotFit` |
 | `overlay_fit(x, TRUE)` | `.overlay_fit(True)` | same stored-default semantics |
 | `plot(x)` | `.plot()` | returns a `Bipl5Widget`: displays itself in notebooks, `.save("f.html")`, `.show()` |
+| `wrap_bipl5_gg(x, ...)` | `.plot_static(...)` | static matplotlib figure; same options (`axis_colour`, `tick_extend`, `label_placement`, …, sizes in points). Also on ordination objects: `ez.plot_static()` |
+| `geom_calibrated_axis()` | `bipl5.static.add_calibrated_axes(ax, z_axes, names)` | calibrated axes on any matplotlib plot |
 | `plot(bipl5_fit)` | `BiplotFit.plot()` | returns an interactive figure (plotly) rather than ggplot2 |
 | `print(x)` | `repr(x)` / just evaluate it | same tree diagrams, unicode/ASCII + colours auto-detected |
 | `colorpal(n)`, `Symbol_List()` | `bipl5.colorpal(n)`, `bipl5.symbol_list()` | identical palette |

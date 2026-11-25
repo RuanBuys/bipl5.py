@@ -197,6 +197,14 @@ class EZBiplot:
 
         return axes_coordinates(self)
 
+    def plot_static(self, **kwargs):
+        """Draw this 2-D biplot as a static matplotlib figure — the analogue
+        of R's ``wrap_bipl5_gg()`` on a biplotEZ object. See
+        :func:`bipl5.static.plot_static` for the options."""
+        from ..static import plot_static
+
+        return plot_static(self, **kwargs)
+
     def __repr__(self) -> str:  # pragma: no cover - cosmetic
         method = self.method or "unfitted"
         return (

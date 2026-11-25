@@ -48,6 +48,26 @@ calibrated axes with click-to-predict, translated density axes, vector
 display, PC-pair switching, and measures-of-fit panels — driven by the same
 JavaScript, vendored unchanged from the R package.
 
+### Static, publication-ready biplots
+
+`plot_static()` draws the same biplot as a static matplotlib figure, the
+Python counterpart of the R package's `wrap_bipl5_gg()`:
+
+```python
+sb = bp.plot_static(title="Iris PCA biplot")
+sb.save("biplot.pdf")            # vector output (.pdf / .svg / .eps)
+sb.save("biplot.png", dpi=600)   # or high-resolution raster
+```
+
+Calibrated tick marks are regenerated from each axis's calibration along
+its **whole visible length**, so they always run to the edge of the plot,
+even after `sb.ax.set_xlim(...)` or interactive zooming. Marker values,
+spacing and phase are exactly those biplotEZ chose. All biplot types are
+supported (spline axes are drawn as curves), `format_samples()` styling
+carries over, and since the result is ordinary matplotlib, extra layers
+such as heatmaps go underneath the biplot by z-order
+(`bipl5.static.ZORDER`).
+
 More of the API:
 
 ```python

@@ -677,6 +677,130 @@ def should_update_means(bp, state) -> bool:
     return bool(bp.meta["x"].class_means) and bp.biplot_type != "cva"
 
 
+def resolve_sample_aesthetics(bp) -> dict:
+    """The sample styling a Biplot currently displays, backend-neutral.
+
+    Used by the static renderer so it draws exactly what the interactive
+    widget shows, including dual stratification. Returns a dict with
+
+    - ``"groups"``: one entry per drawn class, ``{"label", "index"
+      (0-based sample indices), "color", "symbol" (plotly name)}`` — colour
+      x symbol combinations under dual stratification;
+    - ``"legend"``: legend sections ``{"title", "kind", "entries": [(label,
+      color, symbol), ...]}`` — two sections under dual stratification;
+    - ``"formatted"``: whether ``format_samples()`` has been applied.
+    """
+    n = bp.meta["x"].n
+    state = _get_state(bp, n)
+
+    def where(labels, level):
+        return np.where(np.asarray(labels) == level)[0]
+
+    if _primary_kind(state) is None:
+        codes, levels = bp.meta["group"]
+        codes = np.asarray(codes)
+        colors = list(bp.meta["color"])
+        symbols = list(bp.meta["symbol"])
+        groups = [
+            {
+                "label": lev,
+                "index": np.where(codes == i)[0],
+                "color": colors[i % len(colors)],
+                "symbol": symbols[i % len(symbols)],
+            }
+            for i, lev in enumerate(levels)
+        ]
+        groups = [g for g in groups if g["index"].size]
+        entries = [(g["label"], g["color"], g["symbol"]) for g in groups]
+        return {
+            "groups": groups,
+            "legend": [{"title": None, "kind": "group", "entries": entries}],
+            "formatted": False,
+        }
+
+    if _has_dual(state):
+        color_spec = _effective_spec(state, "color", n)
+        symbol_spec = _effective_spec(state, "symbol", n)
+        groups = []
+        for i, c_lev in enumerate(color_spec["levels"]):
+            for j, s_lev in enumerate(symbol_spec["levels"]):
+                idx = np.intersect1d(
+                    where(color_spec["group"]["labels"], c_lev),
+                    where(symbol_spec["group"]["labels"], s_lev),
+                )
+                if idx.size:
+                    groups.append(
+                        {
+                            "label": f"{c_lev} | {s_lev}",
+                            "index": idx,
+                            "color": color_spec["values"][i],
+                            "symbol": symbol_spec["values"][j],
+                        }
+                    )
+        legend = []
+        for kind in _section_order(state):
+            spec = color_spec if kind == "color" else symbol_spec
+            if kind == "color":
+                entries = [
+                    (lev, spec["values"][i], state["defaults"]["symbol"])
+                    for i, lev in enumerate(spec["levels"])
+                ]
+            else:
+                entries = [
+                    (lev, "black", spec["values"][i])
+                    for i, lev in enumerate(spec["levels"])
+                ]
+            legend.append(
+                {"title": spec["legend_title"], "kind": kind, "entries": entries}
+            )
+        return {"groups": groups, "legend": legend, "formatted": True}
+
+    unified = _unified_spec(state, n)
+    groups = [
+        {
+            "label": lev,
+            "index": where(unified["group"]["labels"], lev),
+            "color": unified["colors"][i],
+            "symbol": unified["symbols"][i],
+        }
+        for i, lev in enumerate(unified["levels"])
+    ]
+    groups = [g for g in groups if g["index"].size]
+    entries = [(g["label"], g["color"], g["symbol"]) for g in groups]
+    return {
+        "groups": groups,
+        "legend": [
+            {
+                "title": unified["legend_title"],
+                "kind": _primary_kind(state),
+                "entries": entries,
+            }
+        ],
+        "formatted": True,
+    }
+
+
+def resolve_mean_aesthetics(bp) -> dict | None:
+    """Grouping and styling of the class means after ``format_samples()``.
+
+    Returns ``None`` when the means keep their fitted classes (no formatting
+    applied, or a CVA biplot); otherwise ``{"labels", "levels", "colors",
+    "symbols"}`` — positions are the per-level means of the displayed
+    sample coordinates, exactly as the interactive widget recomputes them.
+    """
+    n = bp.meta["x"].n
+    state = _get_state(bp, n)
+    if _primary_kind(state) is None or not should_update_means(bp, state):
+        return None
+    spec = _mean_spec(state, n)
+    return {
+        "labels": np.asarray(spec["group"]["labels"]),
+        "levels": list(spec["levels"]),
+        "colors": list(spec["colors"]),
+        "symbols": list(spec["symbols"]),
+    }
+
+
 def get_state(bp, n: int) -> dict:
     """Public wrapper used by ``append_mds_display()`` to replay state."""
     return _get_state(bp, n)

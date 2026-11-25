@@ -48,3 +48,16 @@ the R package, which targets the plotly.js 2.x API. `include_plotlyjs`
 accepts `True` (embed the vendored copy), `"cdn"` (pinned CDN URL), or
 any explicit `.js` URL.
 ```
+
+## Static figures
+
+For print, use the static renderer instead of the widget:
+
+```python
+sb = bp.plot_static()
+sb.save("biplot.pdf")             # vector: .pdf, .svg, .eps
+sb.save("biplot.png", dpi=600)    # raster
+```
+
+`sb.figure` is an ordinary matplotlib figure, so `sb.figure.savefig(...)`
+with any of its options works too. See {doc}`../tutorials/static-biplots`.

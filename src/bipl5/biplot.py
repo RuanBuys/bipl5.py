@@ -370,34 +370,9 @@ class Biplot:
                 + ", ".join(self.meta["pc_info"])
             )
 
-        from .ordination import biplot as ez_biplot
-        from .ordination import cva as ez_cva
-        from .ordination import fit_measures as ez_fit
-        from .ordination import pca as ez_pca
-
         dim_prefix = self.meta.get("dim_prefix", "PC")
         is_cva = self.biplot_type == "cva"
-        stored = self.meta.get("scale_mds", {})
-        args = stored.get("args", {})
-
-        spec = self.meta.get("spec")
-        source = spec.analysis_data if spec is not None else ez.raw_X
-        base = ez_biplot(source, center=ez.center, scaled=ez.scaled)
-        if is_cva:
-            new_ez = ez_cva(
-                base,
-                classes=stored.get("common", {}).get("classes"),
-                e_vects=pcs,
-                weighted_cva=args.get("weighted_cva", "weighted"),
-            )
-        else:
-            new_ez = ez_pca(
-                base,
-                e_vects=pcs,
-                correlation_biplot=bool(args.get("correlation_biplot", False)),
-            )
-        new_ez = ez_fit(new_ez)
-        new_ez = restore_raw_x(new_ez)
+        new_ez = restore_raw_x(self._refit_pair(pcs))
 
         group_codes, group_levels = self.meta["group"]
         new_payl = build_one_mds_display(
@@ -445,6 +420,55 @@ class Biplot:
             "ft_name": ft_name(pcs),
         }
         return out
+
+    def _refit_pair(self, pcs):
+        """Re-run the stored PCA/CVA ordination for dimension pair ``pcs``.
+
+        Returns the fitted ordination object with ``X`` still centred and
+        scaled (callers restore raw values when they need them).
+        """
+        from .ordination import biplot as ez_biplot
+        from .ordination import cva as ez_cva
+        from .ordination import fit_measures as ez_fit
+        from .ordination import pca as ez_pca
+
+        ez = self.meta["x"]
+        stored = self.meta.get("scale_mds", {})
+        args = stored.get("args", {})
+        spec = self.meta.get("spec")
+        source = spec.analysis_data if spec is not None else ez.raw_X
+        base = ez_biplot(source, center=ez.center, scaled=ez.scaled)
+        if self.biplot_type == "cva":
+            new_ez = ez_cva(
+                base,
+                classes=stored.get("common", {}).get("classes"),
+                e_vects=pcs,
+                weighted_cva=args.get("weighted_cva", "weighted"),
+            )
+        else:
+            new_ez = ez_pca(
+                base,
+                e_vects=pcs,
+                correlation_biplot=bool(args.get("correlation_biplot", False)),
+            )
+        return ez_fit(new_ez)
+
+    def plot_static(self, display=None, **kwargs):
+        """Draw a static, publication-ready biplot with matplotlib.
+
+        The static counterpart of :meth:`plot` — port of the R package's
+        ``wrap_bipl5_gg()``. ``display`` picks the dimension pair to draw
+        (``"mdsDisplay_13"``, ``(1, 3)`` or ``"PC 1 & 3"``; default: the
+        first). Calibrated tick marks are regenerated across the whole
+        visible length of every axis, so they always run to the edge of
+        the plot. See :func:`bipl5.static.plot_static` for all options.
+
+        Returns a :class:`bipl5.static.StaticBiplot` holding the matplotlib
+        figure and axes; save it with ``.save("biplot.pdf")``.
+        """
+        from .static import plot_static
+
+        return plot_static(self, display=display, **kwargs)
 
     def format_samples(
         self, stratify: str = "col", by=None, col=None, pch=None
