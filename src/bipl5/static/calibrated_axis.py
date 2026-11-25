@@ -32,6 +32,7 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 from matplotlib import artist as martist
+from matplotlib import patheffects
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 from matplotlib.text import Text
@@ -68,6 +69,11 @@ class AxisStyle:
     ``tick_colour``, ``text_colour``, ``label_colour`` and
     ``tick_linewidth`` left at ``None`` follow the axis line, mirroring the
     fallbacks of the R layer.
+
+    ``halo_colour`` outlines the axis line, tick marks, marker values and
+    variable name in a contrasting colour, ``halo_width`` points wide, so
+    the axis stays legible over a heatmap or any other busy background.
+    ``None`` (default) draws no outline.
     """
 
     axis_colour: object = "black"
@@ -83,6 +89,26 @@ class AxisStyle:
     fontfamily: str | None = None
     label_fontstyle: str = "normal"
     label_fontweight: str = "normal"
+    halo_colour: object = None
+    halo_width: float = 2.0
+
+    def line_halo(self, linewidth: float) -> list | None:
+        """Path effects outlining a line of ``linewidth`` points, or
+        ``None`` when this style draws no halo."""
+        if self.halo_colour is None or not self.halo_width > 0:
+            return None
+        return [
+            patheffects.Stroke(
+                linewidth=linewidth + self.halo_width, foreground=self.halo_colour
+            ),
+            patheffects.Normal(),
+        ]
+
+    def text_halo(self) -> list | None:
+        """Path effects outlining text, or ``None`` for no halo."""
+        if self.halo_colour is None or not self.halo_width > 0:
+            return None
+        return [patheffects.withStroke(linewidth=self.halo_width, foreground=self.halo_colour)]
 
     def resolved(self) -> "AxisStyle":
         """Port of ``gg_fill_axis_defaults()``: fill the inherited values."""
@@ -413,6 +439,9 @@ class CalibratedAxes(martist.Artist):
             t.set_fontfamily(style.fontfamily)
         if style.axis_alpha is not None:
             t.set_alpha(style.axis_alpha)
+        halo = style.text_halo()
+        if halo:
+            t.set_path_effects(halo)
         self._adopt(t)
         return t
 
@@ -558,24 +587,34 @@ class CalibratedAxes(martist.Artist):
                     alpha=st.axis_alpha,
                     solid_capstyle="butt",
                 )
+                halo = st.line_halo(st.axis_linewidth)
+                if halo:
+                    ln.set_path_effects(halo)
                 artists.append(self._adopt(ln))
 
         marks = layout["marks"] if (self.axis_ticks or self.axis_text) else []
         if self.axis_ticks and marks:
             rtick = whmin * self.tick_length / 2
-            segs, cols, lws = [], [], []
+            # one collection per axis, so each carries its own halo
+            segs_by_axis: dict[int, list] = {}
             for m in marks:
-                st = styles[m["axis"]]
                 d = m["dodge"] * rtick
-                segs.append([(m["x"] + d[0], m["y"] + d[1]), (m["x"] - d[0], m["y"] - d[1])])
-                cols.append(st.tick_colour)
-                lws.append(st.tick_linewidth)
-            lc = LineCollection(segs, colors=cols, linewidths=lws, capstyle="butt")
-            if any(st.axis_alpha is not None for st in styles):
-                lc.set_alpha(
-                    [styles[m["axis"]].axis_alpha or 1.0 for m in marks]
+                segs_by_axis.setdefault(m["axis"], []).append(
+                    [(m["x"] + d[0], m["y"] + d[1]), (m["x"] - d[0], m["y"] - d[1])]
                 )
-            artists.append(self._adopt(lc))
+            for i, segs in segs_by_axis.items():
+                st = styles[i]
+                lc = LineCollection(
+                    segs,
+                    colors=st.tick_colour,
+                    linewidths=st.tick_linewidth,
+                    capstyle="butt",
+                    alpha=st.axis_alpha,
+                )
+                halo = st.line_halo(st.tick_linewidth)
+                if halo:
+                    lc.set_path_effects(halo)
+                artists.append(self._adopt(lc))
 
         title_texts = []
         if self.axis_labels:

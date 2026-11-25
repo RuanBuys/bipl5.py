@@ -31,6 +31,10 @@ Complete Python port of the R package's `init_biplot()` pipeline.
   captions and themes (`"bw"`, `"minimal"`, `"classic"`, `"biplotEZ"`)
   carry over. `bipl5.static.add_calibrated_axes()` adds calibrated axes to
   any matplotlib plot. matplotlib is now a dependency.
+- `plot_static(halo_colour=..., halo_width=...)` (and `AxisStyle.halo_colour`
+  / `halo_width`) outline the calibrated axes — lines, tick marks, marker
+  values and variable names — so they stay legible over a heatmap or other
+  busy layer drawn beneath the biplot.
 
 ## v0.1.0 (24/03/2026)
 

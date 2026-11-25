@@ -144,6 +144,23 @@ im = sb.ax.imshow(
 cb = sb.figure.colorbar(im, ax=sb.ax, shrink=0.6, location="bottom", label="Petal.Length")
 ```
 
+Over a dark or busy background, give the axes a halo: `halo_colour`
+outlines every axis line, tick mark, marker value and variable name, with
+`halo_width` in points (one value, or one per axis).
+
+```{code-cell} ipython3
+sb = bp.plot_static(
+    caption="", axis_colour=["#ecb7fb", "#ff8e75", "#fff095", "#55eff5"],
+    axis_linewidth=1.5, halo_colour="black", halo_width=2.4,
+)
+(x0, x1), (y0, y1) = sb.window
+gx, gy = np.meshgrid(np.linspace(x0, x1, 300), np.linspace(y0, y1, 300))
+sb.ax.imshow(
+    sb.calibrations[2].predict(gx, gy), extent=(x0, x1, y0, y1), origin="lower",
+    cmap="viridis", aspect="auto", zorder=0.8,
+);
+```
+
 ## Calibrated axes on hand-built plots
 
 {func}`bipl5.static.add_calibrated_axes` is the counterpart of R's

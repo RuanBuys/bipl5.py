@@ -279,6 +279,38 @@ def test_axis_aesthetics_follow_the_arguments_and_can_defer_to_biplotez(pca_ez):
     assert [s.axis_colour for s in per_axis] == ["red", "blue", "green", "black"]
 
 
+def _pixels_of(sb, rgb) -> int:
+    sb.figure.set_dpi(150)
+    sb.figure.canvas.draw()
+    img = np.asarray(sb.figure.canvas.buffer_rgba())[..., :3].astype(int)
+    return int(np.sum(np.all(np.abs(img - np.array(rgb)) <= 8, axis=-1)))
+
+
+def test_axis_halo_outlines_the_calibrated_axes(pca_ez):
+    green = (0, 255, 0)
+    plain = pca_ez.plot_static(legend=False, caption="")
+    assert {s.halo_colour for s in _styles(plain)} == {None}
+    assert _pixels_of(plain, green) == 0
+
+    haloed = pca_ez.plot_static(legend=False, caption="", halo_colour="#00ff00", halo_width=3)
+    assert {s.halo_colour for s in _styles(haloed)} == {"#00ff00"}
+    assert {s.halo_width for s in _styles(haloed)} == {3.0}
+    assert _pixels_of(haloed, green) > 500
+
+    # one value per axis; None leaves that axis plain
+    per_axis = _styles(pca_ez.plot_static(halo_colour=["white", None, "black", None]))
+    assert [s.halo_colour for s in per_axis] == ["white", None, "black", None]
+
+    # the path effects: a wider stroke under lines, an outline around text
+    style = AxisStyle(axis_linewidth=1.5, halo_colour="white", halo_width=2.5)
+    stroke, normal = style.line_halo(1.5)
+    assert stroke._gc["linewidth"] == pytest.approx(4.0)
+    (outline,) = style.text_halo()
+    assert outline._gc["linewidth"] == pytest.approx(2.5)
+    assert AxisStyle().line_halo(1.0) is None and AxisStyle().text_halo() is None
+    assert AxisStyle(halo_colour="k", halo_width=0).line_halo(1.0) is None
+
+
 def test_axis_subsets_and_marker_density_follow_the_axes_call(pca_ez, data):
     sb = axes(pca_ez, which=[0, 2]).plot_static()
     names = [a.name for a in sb.calibrated_axes.calibrated_axes]

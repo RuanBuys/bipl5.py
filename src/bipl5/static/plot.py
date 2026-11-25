@@ -608,6 +608,8 @@ def plot_static(
     axis_linetype="solid",
     text_size=7.4,
     label_size=11.0,
+    halo_colour=None,
+    halo_width=2.0,
     axis_labels: bool = True,
     axis_ticks: bool = True,
     axis_text: bool = True,
@@ -683,6 +685,11 @@ def plot_static(
         codes, or matplotlib styles) of the axis lines.
     text_size, label_size:
         Font sizes (points) of the marker values and the variable names.
+    halo_colour, halo_width:
+        Outline the axis lines, tick marks, marker values and variable
+        names in ``halo_colour``, ``halo_width`` points wide, so the axes
+        stay legible over a heatmap drawn beneath the biplot. One value or
+        one per axis; ``None`` (default) draws no outline.
     axis_labels, axis_ticks, axis_text:
         Whether to draw the variable names, the tick marks and the marker
         values.
@@ -786,6 +793,8 @@ def plot_static(
     aes_lty = resolve_axis_aes(axis_linetype, ax_aes.get("lty"), "solid", n_ax)
     aes_tsize = resolve_axis_aes(text_size, [ez_text], 7.4, n_ax)
     aes_lsize = resolve_axis_aes(label_size, [ez_label], 11.0, n_ax)
+    aes_halo = resolve_axis_aes(halo_colour, None, None, n_ax)
+    aes_halo_w = resolve_axis_aes(halo_width, None, 2.0, n_ax)
 
     records = []
     for i, coords in enumerate(ctx.z_axes):
@@ -798,6 +807,8 @@ def plot_static(
             text_size=float(aes_tsize[i]),
             label_colour=aes_label[i],
             label_size=float(aes_lsize[i]),
+            halo_colour=aes_halo[i],
+            halo_width=float(aes_halo_w[i]),
         )
         records.append(
             CalibratedAxis.from_coordinates(
