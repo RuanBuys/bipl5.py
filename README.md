@@ -8,9 +8,119 @@ Create reactive biplots
 $ pip install bipl5
 ```
 
+## Documentation
+
+Full documentation — executed tutorials with live widgets for every
+biplot type, an R-to-Python migration guide, and the API reference —
+lives in `docs/` (Sphinx + MyST-NB, Read the Docs-ready). Build locally
+with:
+
+```bash
+pip install -e . -r docs/requirements.txt
+sphinx-build -b html docs docs/_build/html
+```
+
 ## Usage
 
-- TODO
+The interactive pipeline mirrors the R package, with method chaining in
+place of R's pipe:
+
+```python
+import pandas as pd
+import bipl5
+
+data = pd.read_csv("mydata.csv")
+
+bp = (
+    bipl5.init_biplot(data, center=True, scale=False)
+    .scale_mds("pca", classes=data["Species"])   # or "cva" / "pco" / "regress"
+    .format_samples(stratify="col", by="Species")  # colour the samples
+    .score_axes()                                # optional: Alves reading errors
+)
+
+widget = bp.plot()      # displays itself in Jupyter/Quarto
+widget.save("biplot.html")   # standalone offline HTML file
+widget.show()                # open in a browser
+```
+
+The rendered biplot carries the same reactivity as the R package —
+calibrated axes with click-to-predict, translated density axes, vector
+display, PC-pair switching, and measures-of-fit panels — driven by the same
+JavaScript, vendored unchanged from the R package.
+
+### Static, publication-ready biplots
+
+`plot_static()` draws the same biplot as a static matplotlib figure, the
+Python counterpart of the R package's `wrap_bipl5_gg()`:
+
+```python
+sb = bp.plot_static(title="Iris PCA biplot")
+sb.save("biplot.pdf")            # vector output (.pdf / .svg / .eps)
+sb.save("biplot.png", dpi=600)   # or high-resolution raster
+```
+
+Calibrated tick marks are regenerated from each axis's calibration along
+its **whole visible length**, so they always run to the edge of the plot,
+even after `sb.ax.set_xlim(...)` or interactive zooming. Marker values,
+spacing and phase are exactly those biplotEZ chose. All biplot types are
+supported (spline axes are drawn as curves), `format_samples()` styling
+carries over, and since the result is ordinary matplotlib, extra layers
+such as heatmaps go underneath the biplot by z-order
+(`bipl5.static.ZORDER`).
+
+More of the API:
+
+```python
+# dual stratification: colour by one variable, symbol by another —
+# two independent legend sections, each toggling across the other
+bp = bp.format_samples(stratify="symbol", by="Band", pch=[15, 17])
+
+bp = bp.append_mds_display((1, 3))          # add a PC pair to the dropdown
+bp = bp.remove_mds_display("mdsDisplay_13") # and remove it again
+bp = bp.overlay_fit(True)                   # default fit-measure display mode
+
+coords = bp.extract("mdsDisplay_12.Data.sample_coordinates")
+fit = bp.extract("fit_measures.CumPred")    # plottable fit graph
+fit.plot()
+```
+
+The internal ordination engine — a Python port of the parts of the R
+package [biplotEZ](https://cran.r-project.org/package=biplotEZ) that bipl5
+relies on — is available as `bipl5.ordination`:
+
+```python
+from bipl5.ordination import biplot, axes_coordinates
+
+ez = (
+    biplot(data, group_aes=data["Species"], scaled=True)
+    .pca(e_vects=(1, 2), show_class_means=True)
+    .fit_measures()
+)
+ez.Z                     # sample coordinates in the biplot plane
+ez.axis_predictivity     # per-variable measures of fit
+axes_coordinates(ez)     # calibrated tick marks for every biplot axis
+```
+
+Implemented: PCA (incl. correlation biplots), CVA (incl. the `sample.opt`
+low-dimension strategy), PCO with regression **or spline** axes, and
+regression biplots on user-supplied coordinates. Spline axes follow the
+biplotEZ 2.3 GitHub sources (the C++-backed optimizer not yet on CRAN),
+reimplemented in NumPy:
+
+```python
+bp = bipl5.init_biplot(data).scale_mds("pco", axes="splines")
+bp.plot()   # non-linear calibrated axes; click a curve to read predictions
+
+# the optimizer multi-starts 250 times per axis by default (like R);
+# tune with spline_control for faster, rougher fits:
+bp = bipl5.init_biplot(data).scale_mds(
+    "pco", axes="splines",
+    spline_control={"gamma": 25, "bigsigmaactivate": 2, "seed": 1},
+)
+```
+
+This completes the feature surface of the R package's retained API (see
+`TRANSLATION_PLAN.md` for the full phase history).
 
 ## Contributing
 
